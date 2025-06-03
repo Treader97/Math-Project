@@ -1,0 +1,1945 @@
+<!DOCTYPE html>  
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Rational Function Graph</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Computer Modern Serif', serif;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            height: auto; /* Changed from fixed height to auto */
+        }
+        .toolbar {
+            width: 100%;
+            padding: 8px 20px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            z-index: 10;
+            height: 50px;
+        }
+        .controls-bar {
+            width: 100%;
+            padding: 8px 20px 20px 20px; /* Increased bottom padding */
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: auto;
+            min-height: 100px; /* Increased minimum height to ensure space for controls */
+            margin-bottom: 30px; /* Significantly increased margin between controls and graph */
+            position: relative; /* Added position relative */
+            z-index: 5; /* Added z-index to ensure controls are above graph */
+        }
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            width: 100%;
+            margin: 10px 0; /* Increased vertical margin */
+            padding: 5px 0; /* Added padding */
+            background-color: rgba(255,255,255,0.5); /* Light background for visibility */
+            border-radius: 4px; /* Rounded corners */
+        }
+        .check-container {
+            width: 100%;
+            padding: 15px 20px;
+            background-color: #ffffff;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .equation-input {
+            flex: 1;
+            min-width: 300px;
+            padding: 6px 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .update-button, .check-button, .settings-button, .add-hole-button {
+            padding: 6px 16px;
+            font-size: 14px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .update-button {
+            background-color: #27ae60;
+        }
+        .settings-button {
+            background-color: #95a5a6;
+        }
+        .add-hole-button {
+            background-color: #f39c12;
+        }
+        .update-button:hover {
+            background-color: #229954;
+        }
+        .check-button:hover {
+            background-color: #2980b9;
+        }
+        .settings-button:hover {
+            background-color: #7f8c8d;
+        }
+        .add-hole-button:hover {
+            background-color: #e67e22;
+        }
+        .feedback {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .feedback.correct {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .feedback.incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .feedback.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .feedback.hidden {
+            display: none;
+        }
+        .graph-container {
+            position: relative;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin: 50px 20px 20px 20px; /* Significantly increased top margin */
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1; /* Lower z-index than controls */
+        }
+        canvas {
+            border: 1px solid #ddd;
+            cursor: crosshair;
+        }
+        .radio-group {
+            display: flex;
+            gap: 15px;
+        }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+        }
+        .radio-option input[type="radio"] {
+            margin: 0;
+        }
+        .number-input {
+            width: 60px;
+            padding: 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .hole-input {
+            width: 80px;
+            padding: 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .reflect-button {
+            padding: 6px 12px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background-color 0.3s;
+        }
+                .holes-list-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .holes-list {
+            width: 100%;
+            margin-top: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            background-color: white;
+        }
+        
+        .no-holes-message {
+            color: #888;
+            font-style: italic;
+            padding: 5px;
+            text-align: center;
+        }
+        
+        .hole-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            background-color: #f9f9f9;
+            border-radius: 3px;
+            border-left: 3px solid #f39c12;
+        }
+        
+        .hole-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .hole-item .hole-info {
+            flex: 1;
+        }
+        
+        .hole-item .hole-coords {
+            font-family: monospace;
+            font-weight: bold;
+        }
+        
+        .hole-item .delete-hole-button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 3px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+        
+        .hole-item .delete-hole-button:hover {
+            background-color: #c0392b;
+        }
+        .instructions {
+            margin: 10px 20px 20px 20px;
+            max-width: 700px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        /* Settings Dialog Styles */
+        .dialog-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .dialog-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            min-width: 400px;
+            max-width: 80%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .dialog-section {
+            margin-bottom: 20px;
+        }
+        .dialog-section h4 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .dialog-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .dialog-label {
+            width: 140px;
+            margin-right: 10px;
+        }
+        .dialog-input {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .dialog-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .dialog-button.primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .dialog-button.secondary {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="toolbar">
+            <label for="user-equation"><strong>Enter rational function:</strong></label>
+            <input type="text" id="user-equation" class="equation-input" placeholder="e.g., (x+1)(x-2)/(x-3)(x+4) or 2(x-1)/(x+2)²" value="(x+1)(x-2)/(x-3)(x+4)">
+            <button id="update-button" class="update-button">Update Graph</button>
+            <button id="settings-button" class="settings-button">Graph Settings</button>
+        </div>
+        
+        <div class="controls-bar">
+            <div class="control-row">
+                <label><strong>Horizontal Asymptote:</strong></label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="ha-horizontal" name="h-asymptote" value="horizontal" checked>
+                        <label for="ha-horizontal">Horizontal</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="ha-slant" name="h-asymptote" value="slant">
+                        <label for="ha-slant">Slant</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="ha-none" name="h-asymptote" value="none">
+                        <label for="ha-none">None</label>
+                    </div>
+                </div>
+                
+                <div style="border-left: 1px solid #ddd; height: 30px; margin: 0 15px;"></div>
+                
+                <label for="num-vas"><strong>Vertical Asymptotes:</strong></label>
+                <input type="number" id="num-vas" class="number-input" min="0" max="8" value="2">
+                
+                <div style="border-left: 1px solid #ddd; height: 30px; margin: 0 15px;"></div>
+                
+                <label for="num-zeros"><strong>X-Intercepts:</strong></label>
+                <input type="number" id="num-zeros" class="number-input" min="0" max="8" value="2">
+                
+                <div style="border-left: 1px solid #ddd; height: 30px; margin: 0 15px;"></div>
+                
+                <button id="reflect-button" class="reflect-button">Reflect</button>
+            </div>
+            
+            <div class="control-row">
+                <label for="hole-x"><strong>Add Hole:</strong></label>
+                <input type="text" id="hole-x" class="hole-input" placeholder="x" >
+<input type="text" id="hole-y" class="hole-input" placeholder="y" >
+                <button id="add-hole-button" class="add-hole-button">Add Hole</button>
+                <span style="font-size: 13px; color: #666;">Drag holes to move them</span>
+            </div>
+            
+            <!-- Hole List Section -->
+            <div class="control-row holes-list-container">
+                <label><strong>Current Holes:</strong></label>
+                <div id="holes-list" class="holes-list">
+                    <div class="no-holes-message">No holes added yet</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="graph-container">
+            <canvas id="graph" width="600" height="600"></canvas>
+        </div>
+        
+        <div class="check-container">
+            <button id="check-button" class="check-button">Check Answer</button>
+            <div id="feedback" class="feedback hidden"></div>
+        </div>
+        
+        <div class="instructions">
+            <p><strong>Enter a rational function and click "Update Graph"</strong> to set the target. Then use controls to modify your function to match it.</p>
+            <p><em>Drag zeros and vertical asymptotes to change positions. Drag horizontal asymptote to change height. Drag holes to move them. Place points on top of each other to create multiplicities.</em></p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('graph');
+        const ctx = canvas.getContext('2d');
+        const userEquationInput = document.getElementById('user-equation');
+        const updateButton = document.getElementById('update-button');
+        const checkButton = document.getElementById('check-button');
+        const settingsButton = document.getElementById('settings-button');
+        const feedback = document.getElementById('feedback');
+        const haHorizontalRadio = document.getElementById('ha-horizontal');
+        const haSlantRadio = document.getElementById('ha-slant');
+        const haNoneRadio = document.getElementById('ha-none');
+        const numVAsInput = document.getElementById('num-vas');
+        const numZerosInput = document.getElementById('num-zeros');
+        const reflectButton = document.getElementById('reflect-button');
+        const holeXInput = document.getElementById('hole-x');
+        const holeYInput = document.getElementById('hole-y');
+        const addHoleButton = document.getElementById('add-hole-button');
+        
+        // Graph settings
+        let graphData = {
+            xmin: -10,
+            xmax: 10,
+            ymin: -10,
+            ymax: 10,
+            xscale: 1,
+            yscale: 1,
+            xlabelInterval: 1,
+            ylabelInterval: 1,
+            tickFontSize: 14,
+            axisLabelFontSize: 20
+        };
+        
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Target rational function data (from the parsed equation - this is the answer)
+        let targetFunction = {};
+        
+        // Current rational function state (modified by controls - student's attempt)
+        let currentZeros = [];
+        let currentVAs = [];
+        let currentHorizontalAsymptote = 0;
+        let currentSlantAsymptote = { slope: 1, intercept: 0 };
+        let currentSlantPoints = [{ x: -2, y: -1 }, { x: 2, y: 3 }]; // Two draggable points for slant asymptote
+        let currentHoles = [];
+        let isReflected = false;
+        
+        // Initialize with default positions
+        function initializeDefaults() {
+            currentZeros = [
+                { value: -2, multiplicity: 1 },
+                { value: 2, multiplicity: 1 }
+            ];
+            currentVAs = [
+                { value: -3, multiplicity: 1 },
+                { value: 3, multiplicity: 1 }
+            ];
+            currentHorizontalAsymptote = 0;
+            currentSlantAsymptote = { slope: 1, intercept: 0 };
+            currentSlantPoints = [{ x: -2, y: -1 }, { x: 2, y: 3 }];
+            currentHoles = [];
+            isReflected = false;
+            
+            // Update the holes list when initializing
+            updateHolesList();
+        }
+        
+        // Helper functions
+        function gcd(a, b) { 
+            return b ? gcd(b, a % b) : a; 
+        }
+        
+/**
+ * Parses a string like "3/4", "-2", "1.25" into a Number.
+ * Returns NaN if the format is invalid.
+ */
+ function parseNumericInput(str) {
+  str = str.trim();
+  // Match optional leading sign, digits, optional fraction or decimal
+  const fracMatch = str.match(/^([+-]?\d+)(?:\/(\d+))?$/);
+  if (fracMatch) {
+    const num = parseInt(fracMatch[1], 10);
+    if (fracMatch[2]) {
+      const den = parseInt(fracMatch[2], 10);
+      return den === 0 ? NaN : num / den;
+    }
+    return num;
+  }
+  // Fallback to decimal
+  const dec = parseFloat(str);
+  return isNaN(dec) ? NaN : dec;
+}
+
+
+
+
+        function formatLabel(val) {
+            if (Number.isInteger(val)) return val.toString();
+            
+            const piVal = val / Math.PI;
+            const eps = 1e-4;
+            
+            for (let den = 1; den <= 12; den++) {
+                if (den > 6 && den !== 12) continue;
+                
+                const num = Math.round(piVal * den);
+                if (Math.abs(piVal - num / den) < eps) {
+                    if (num === 0) return "0";
+                    
+                    if (den === 1) {
+                        if (num === 1) return "π";
+                        if (num === -1) return "-π";
+                        return `${num}π`;
+                    }
+                    
+                    const g = gcd(Math.abs(num), den);
+                    const simplifiedNum = num / g;
+                    const simplifiedDen = den / g;
+                    
+                    if (simplifiedNum === 1) return `π/${simplifiedDen}`;
+                    if (simplifiedNum === -1) return `-π/${simplifiedDen}`;
+                    
+                    return `${simplifiedNum}π/${simplifiedDen}`;
+                }
+            }
+            
+            return val.toFixed(2);
+        }
+        
+        // Convert between canvas coordinates and graph coordinates
+        function toCanvasX(x) {
+            const axMin = graphData.xmin - graphData.xscale;
+            const axMax = graphData.xmax + graphData.xscale;
+            return (x - axMin) / (axMax - axMin) * width;
+        }
+        
+        function toCanvasY(y) {
+            const ayMin = graphData.ymin - graphData.yscale;
+            const ayMax = graphData.ymax + graphData.yscale;
+            return height - (y - ayMin) / (ayMax - ayMin) * height;
+        }
+        
+        function toGraphX(canvasX) {
+            const axMin = graphData.xmin - graphData.xscale;
+            const axMax = graphData.xmax + graphData.xscale;
+            return axMin + (canvasX / width) * (axMax - axMin);
+        }
+        
+        function toGraphY(canvasY) {
+            const ayMin = graphData.ymin - graphData.yscale;
+            const ayMax = graphData.ymax + graphData.yscale;
+            return ayMin + ((height - canvasY) / height) * (ayMax - ayMin);
+        }
+        
+        function snapToGrid(value, scale) {
+    return Math.round(value / scale) * scale;
+}
+        
+        // Parse rational function equation
+        function parseRationalFunction(equation) {
+            try {
+                // Remove spaces and split by / to get numerator and denominator
+                let eq = equation.replace(/\s/g, '');
+                const fractionMatch = eq.match(/^([^/]+)\/([^/]+)$/);
+                
+                if (!fractionMatch) {
+                    // Maybe it's just a polynomial (no denominator)
+                    return parsePolynomialPart(eq, true);
+                }
+                
+                const numeratorStr = fractionMatch[1];
+                const denominatorStr = fractionMatch[2];
+                
+                const numerator = parsePolynomialPart(numeratorStr, true);
+                const denominator = parsePolynomialPart(denominatorStr, false);
+                
+                if (!numerator.success || !denominator.success) {
+                    return { success: false, error: 'Could not parse numerator or denominator' };
+                }
+                
+                // Handle complex forms in numerator or denominator
+                if (numerator.complexForm || denominator.complexForm) {
+                    // For complex forms, we treat them as polynomials without real zeros
+                    // For example (x+i)(x-i) = x^2 + 1
+                    if (numerator.complexForm) {
+                        numerator.zeros = []; // No real zeros
+                    }
+                    
+                    if (denominator.complexForm) {
+                        denominator.zeros = []; // No real zeros
+                    }
+                }
+                
+                // Debug: log what was parsed before hole detection
+                console.log('Original numerator zeros:', numerator.zeros);
+                console.log('Original denominator zeros:', denominator.zeros);
+                
+                // Find holes (common factors between numerator and denominator)
+                const holes = findHoles(numerator.zeros, denominator.zeros);
+                console.log('Found holes:', holes);
+                
+                // Remove hole factors from numerator and denominator to get simplified function
+                const simplifiedNumerator = removeHoleFactors(numerator.zeros, holes);
+                const simplifiedDenominator = removeHoleFactors(denominator.zeros, holes);
+                
+                return {
+                    success: true,
+                    numeratorCoeff: numerator.coefficient,
+                    denominatorCoeff: denominator.coefficient,
+                    numeratorZeros: simplifiedNumerator,
+                    denominatorZeros: simplifiedDenominator,
+                    holes: holes,
+                    horizontalAsymptote: calculateHorizontalAsymptote(
+                        {coefficient: numerator.coefficient, zeros: simplifiedNumerator}, 
+                        {coefficient: denominator.coefficient, zeros: simplifiedDenominator}
+                    ),
+                    slantAsymptote: calculateSlantAsymptote(
+                        {coefficient: numerator.coefficient, zeros: simplifiedNumerator}, 
+                        {coefficient: denominator.coefficient, zeros: simplifiedDenominator}
+                    )
+                };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+        
+        // Find holes by identifying common factors
+        function findHoles(numeratorZeros, denominatorZeros) {
+            const holes = [];
+            
+            // Create copies to avoid modifying originals
+            const numZeros = [...numeratorZeros];
+            const denZeros = [...denominatorZeros];
+            
+            for (let i = 0; i < numZeros.length; i++) {
+                for (let j = 0; j < denZeros.length; j++) {
+                    if (Math.abs(numZeros[i].value - denZeros[j].value) < 1e-10) {
+                        // Found a common factor - this creates a hole
+                        const holeX = numZeros[i].value;
+                        const minMultiplicity = Math.min(numZeros[i].multiplicity, denZeros[j].multiplicity);
+                        
+                        // Calculate hole y-coordinate by evaluating simplified function
+                        const holeY = calculateHoleYCoordinate(holeX, numZeros, denZeros, minMultiplicity);
+                        
+                        // Add hole for each multiplicity
+                        for (let k = 0; k < minMultiplicity; k++) {
+                            holes.push({ x: holeX, y: holeY });
+                        }
+                        
+                        // Reduce multiplicities or remove zeros
+                        numZeros[i].multiplicity -= minMultiplicity;
+                        denZeros[j].multiplicity -= minMultiplicity;
+                        
+                        if (numZeros[i].multiplicity <= 0) {
+                            numZeros.splice(i, 1);
+                            i--;
+                            break;
+                        }
+                        if (denZeros[j].multiplicity <= 0) {
+                            denZeros.splice(j, 1);
+                            j--;
+                        }
+                    }
+                }
+            }
+            
+            return holes;
+        }
+        
+        // Remove hole factors from zero list
+        function removeHoleFactors(zeros, holes) {
+            const simplified = [];
+            
+            // Count holes at each x-value
+            const holeCount = {};
+            holes.forEach(hole => {
+                const key = hole.x.toString();
+                holeCount[key] = (holeCount[key] || 0) + 1;
+            });
+            
+            // Add back zeros that weren't completely cancelled
+            zeros.forEach(zero => {
+                const key = zero.value.toString();
+                const holesAtThisX = holeCount[key] || 0;
+                const remainingMultiplicity = zero.multiplicity - holesAtThisX;
+                
+                if (remainingMultiplicity > 0) {
+                    simplified.push({ value: zero.value, multiplicity: remainingMultiplicity });
+                }
+            });
+            
+            return simplified;
+        }
+        
+        // Calculate y-coordinate of hole by evaluating simplified function
+        function calculateHoleYCoordinate(holeX, originalNumZeros, originalDenZeros, cancelledMultiplicity) {
+            // Build simplified numerator and denominator (without the cancelled factors)
+            let numerator = 1;
+            let denominator = 1;
+            
+            // Add numerator factors (minus cancelled)
+            originalNumZeros.forEach(zero => {
+                if (Math.abs(zero.value - holeX) < 1e-10) {
+                    // This is the cancelled factor - reduce multiplicity
+                    const remainingMult = zero.multiplicity - cancelledMultiplicity;
+                    if (remainingMult > 0) {
+                        numerator *= Math.pow(holeX - zero.value, remainingMult);
+                    }
+                } else {
+                    numerator *= Math.pow(holeX - zero.value, zero.multiplicity);
+                }
+            });
+            
+            // Add denominator factors (minus cancelled)
+            originalDenZeros.forEach(zero => {
+                if (Math.abs(zero.value - holeX) < 1e-10) {
+                    // This is the cancelled factor - reduce multiplicity
+                    const remainingMult = zero.multiplicity - cancelledMultiplicity;
+                    if (remainingMult > 0) {
+                        denominator *= Math.pow(holeX - zero.value, remainingMult);
+                    }
+                } else {
+                    denominator *= Math.pow(holeX - zero.value, zero.multiplicity);
+                }
+            });
+            
+            // Handle the limit as x approaches holeX for the cancelled factor
+            // For (x-a)^n / (x-a)^m where n >= m, we get a finite limit
+            // We need to use L'Hôpital's rule or factor out the common terms
+            // For simplicity, we'll approximate by using a value very close to holeX
+            const epsilon = 1e-8;
+            const testX = holeX + epsilon;
+            
+            numerator = 1;
+            denominator = 1;
+            
+            originalNumZeros.forEach(zero => {
+                numerator *= Math.pow(testX - zero.value, zero.multiplicity);
+            });
+            
+            originalDenZeros.forEach(zero => {
+                denominator *= Math.pow(testX - zero.value, zero.multiplicity);
+            });
+            
+            return numerator / denominator;
+        }
+        
+        function parsePolynomialPart(polyStr, isNumerator) {
+            try {
+                // Special case for x^n when it's the entire input
+                if (polyStr === "x") {
+                    return {
+                        success: true,
+                        coefficient: 1,
+                        zeros: [{ value: 0, multiplicity: 1 }]
+                    };
+                } else if (polyStr.match(/^x\^(\d+)$/)) {
+                    const exponent = parseInt(polyStr.match(/^x\^(\d+)$/)[1]);
+                    return {
+                        success: true,
+                        coefficient: 1,
+                        zeros: [{ value: 0, multiplicity: exponent }]
+                    };
+                }
+                
+                // Handle complex conjugate pairs like (x+i)(x-i) or (x+2i)(x-2i)
+                const complexPairRegex = /^\(x([+-])i\)\(x([+-])i\)$/;
+                const complexPairWithCoeffRegex = /^\(x([+-])(\d+)i\)\(x([+-])(\d+)i\)$/;
+
+                // Check for basic (x+i)(x-i) which is x^2 + 1
+                if (complexPairRegex.test(polyStr)) {
+                    const matches = polyStr.match(complexPairRegex);
+                    // Only valid if one is + and one is - (conjugate pair)
+                    if (matches[1] !== matches[2]) {
+                        return {
+                            success: true,
+                            coefficient: 1,
+                            // This represents x^2 + 1 which has no real zeros
+                            complexForm: "x^2 + 1",
+                            zeros: []
+                        };
+                    }
+                }
+
+                // Check for (x+ai)(x-ai) pattern where a is a number
+                if (complexPairWithCoeffRegex.test(polyStr)) {
+                    const matches = polyStr.match(complexPairWithCoeffRegex);
+                    const coeff1 = parseInt(matches[2]);
+                    const coeff2 = parseInt(matches[4]);
+                    
+                    // Only valid if signs are opposite and coefficients are equal
+                    if (matches[1] !== matches[3] && coeff1 === coeff2) {
+                        return {
+                            success: true,
+                            coefficient: 1,
+                            // This represents x^2 + a^2 which has no real zeros
+                            complexForm: `x^2 + ${coeff1 * coeff1}`,
+                            zeros: []
+                        };
+                    }
+                }
+                
+                // Extract leading coefficient (handles integers, decimals, and fractions)
+                let coefficient = 1;
+                let eq = polyStr;
+                
+                const coeffMatch = eq.match(/^([+-]?\d*(?:\.\d+)?(?:\/\d+)?)/);
+                if (coeffMatch && coeffMatch[1] !== '' && coeffMatch[1] !== '+' && coeffMatch[1] !== '-') {
+                    const coeffStr = coeffMatch[1];
+                    
+                    // Check if it's a fraction
+                    if (coeffStr.includes('/')) {
+                        const parts = coeffStr.split('/');
+                        const numerator = parseFloat(parts[0]);
+                        const denominator = parseFloat(parts[1]);
+                        coefficient = numerator / denominator;
+                    } else {
+                        coefficient = parseFloat(coeffStr);
+                    }
+                    
+                    eq = eq.replace(coeffMatch[1], '');
+                } else if (eq.startsWith('-')) {
+                    coefficient = -1;
+                    eq = eq.substring(1);
+                } else if (eq.startsWith('+')) {
+                    coefficient = 1;
+                    eq = eq.substring(1);
+                }
+                
+                // If no factors but there's an x term, coefficient stays as parsed
+                // If only factors and no explicit coefficient, coefficient should be 1
+                if (!eq.includes('(') && !eq.includes('x')) {
+                    // It's just a constant
+                    if (coefficient === 1 && coeffMatch && coeffMatch[1] === '') {
+                        // No coefficient was actually found - this is an error
+                        return { success: false, error: 'Empty polynomial part' };
+                    }
+                    return {
+                        success: true,
+                        coefficient: coefficient,
+                        zeros: []
+                    };
+                }
+                
+                // Find all factors and combine multiplicities
+                const zerosMap = new Map();
+                const factorPattern = /\(x([+-])(\d+(?:\.\d+)?(?:\/\d+)?)\)(\^?(\d+))?/g;
+                let match;
+                
+                while ((match = factorPattern.exec(eq)) !== null) {
+                    const sign = match[1] === '+' ? -1 : 1;
+                    let value = match[2];
+                    
+                    // Handle fractions
+                    if (value.includes('/')) {
+                        const parts = value.split('/');
+                        const numerator = parseFloat(parts[0]);
+                        const denominator = parseFloat(parts[1]);
+                        value = numerator / denominator;
+                    } else {
+                        value = parseFloat(value);
+                    }
+                    
+                    value = sign * value;
+                    const multiplicity = match[4] ? parseInt(match[4]) : 1;
+                    
+                    const key = value.toString();
+                    if (zerosMap.has(key)) {
+                        zerosMap.set(key, zerosMap.get(key) + multiplicity);
+                    } else {
+                        zerosMap.set(key, multiplicity);
+                    }
+                }
+                
+                // Handle x factors
+                const xFactorPattern = /(?:^|[^(])(x)(\^?(\d+))?/g;
+                while ((match = xFactorPattern.exec(eq)) !== null) {
+                    const multiplicity = match[3] ? parseInt(match[3]) : 1;
+                    if (zerosMap.has('0')) {
+                        zerosMap.set('0', zerosMap.get('0') + multiplicity);
+                    } else {
+                        zerosMap.set('0', multiplicity);
+                    }
+                }
+                
+                const zeros = Array.from(zerosMap.entries()).map(([value, multiplicity]) => ({
+                    value: parseFloat(value),
+                    multiplicity
+                }));
+                
+                // If we found factors but no explicit coefficient was given, coefficient should be 1
+                if (zeros.length > 0 && coeffMatch && (coeffMatch[1] === '' || coeffMatch[1] === '+')) {
+                    coefficient = 1;
+                }
+                
+                return {
+                    success: true,
+                    coefficient: coefficient,
+                    zeros: zeros
+                };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+        
+        function calculateHorizontalAsymptote(numerator, denominator) {
+            const numDegree = numerator.zeros.reduce((sum, z) => sum + z.multiplicity, 0);
+            const denDegree = denominator.zeros.reduce((sum, z) => sum + z.multiplicity, 0);
+            
+            if (numDegree < denDegree) {
+                // Bottom degree higher → HA = 0
+                return 0;
+            } else if (numDegree === denDegree) {
+                // Same degree → HA = leading coeff of num / leading coeff of den
+                return numerator.coefficient / denominator.coefficient;
+            } else if (numDegree === denDegree + 1) {
+                // Top is one degree higher → slant asymptote (no horizontal)
+                return null;
+            } else {
+                // Top is more than one degree higher → no asymptote
+                return null;
+            }
+        }
+        
+        function calculateSlantAsymptote(numerator, denominator) {
+            const numDegree = numerator.zeros.reduce((sum, z) => sum + z.multiplicity, 0);
+            const denDegree = denominator.zeros.reduce((sum, z) => sum + z.multiplicity, 0);
+            
+            if (numDegree === denDegree + 1) {
+                // Has slant asymptote - perform polynomial division
+                // For simplicity, we'll calculate it for common cases
+                
+                // Build polynomial coefficients from zeros
+                const numCoeff = buildPolynomialCoefficients(numerator);
+                const denCoeff = buildPolynomialCoefficients(denominator);
+                
+                // Perform polynomial long division to get quotient (slope and intercept)
+                const quotient = polynomialLongDivision(numCoeff, denCoeff);
+                
+                if (quotient.length >= 1) {
+                    const slope = quotient.length > 1 ? quotient[quotient.length - 2] : 0;
+                    const intercept = quotient[quotient.length - 1];
+                    return { slope, intercept };
+                }
+            }
+            return null;
+        }
+        
+        // Build polynomial coefficients from zeros (highest degree first)
+        function buildPolynomialCoefficients(poly) {
+            const degree = poly.zeros.reduce((sum, z) => sum + z.multiplicity, 0);
+            let coeffs = [poly.coefficient]; // Start with leading coefficient
+            
+            // Expand (x - root1)(x - root2)... form
+            for (const zero of poly.zeros) {
+                for (let i = 0; i < zero.multiplicity; i++) {
+                    // Multiply by (x - zero.value)
+                    const newCoeffs = new Array(coeffs.length + 1).fill(0);
+                    
+                    // Distribute: coeffs * x - coeffs * zero.value
+                    for (let j = 0; j < coeffs.length; j++) {
+                        newCoeffs[j] += coeffs[j]; // x term
+                        newCoeffs[j + 1] -= coeffs[j] * zero.value; // constant term
+                    }
+                    
+                    coeffs = newCoeffs;
+                }
+            }
+            
+            return coeffs;
+        }
+        
+        // Simple polynomial long division (returns quotient coefficients)
+        function polynomialLongDivision(dividend, divisor) {
+            // Only handle case where result is linear (degree 1)
+            if (dividend.length - divisor.length !== 1) {
+                return [1, 0]; // Default to y = x if can't calculate
+            }
+            
+            // For degree difference of 1, we get ax + b
+            const quotient = [];
+            let remainder = [...dividend];
+            
+            // First division: get leading coefficient of quotient
+            if (remainder.length > divisor.length) {
+                const leadCoeff = remainder[0] / divisor[0];
+                quotient.push(leadCoeff);
+                
+                // Subtract divisor * leadCoeff * x from remainder
+                for (let i = 0; i < divisor.length; i++) {
+                    remainder[i] -= leadCoeff * divisor[i];
+                }
+                remainder.shift(); // Remove leading zero
+            }
+            
+            // Second division: get constant term of quotient
+            if (remainder.length > 0 && remainder.length === divisor.length) {
+                const constCoeff = remainder[0] / divisor[0];
+                quotient.push(constCoeff);
+            }
+            
+            return quotient.length === 2 ? quotient : [1, 0];
+        }
+        
+        // Update target function from equation
+        function updateFromEquation() {
+            const equation = userEquationInput.value.trim();
+            if (!equation) {
+                feedback.textContent = 'Please enter an equation first!';
+                feedback.className = 'feedback incorrect';
+                return;
+            }
+            
+            const parsed = parseRationalFunction(equation);
+            if (!parsed.success) {
+                feedback.textContent = 'Could not parse equation. Please check the format.';
+                feedback.className = 'feedback incorrect';
+                return;
+            }
+            
+            // Update target function (this becomes the answer)
+            targetFunction = parsed;
+            
+            // ALWAYS reset to same default state - don't give away the answer!
+            haHorizontalRadio.checked = true;
+            haSlantRadio.checked = false;
+            haNoneRadio.checked = false;
+            numVAsInput.value = "2";
+            numZerosInput.value = "2";
+            isReflected = false;
+            
+            // Initialize with defaults
+            initializeDefaults();
+            
+            drawGraph();
+            
+            feedback.textContent = 'Target set! Now adjust your rational function to match the equation.';
+            feedback.className = 'feedback info';
+        }
+        
+        // Generate current rational function based on controls
+        function generateCurrentFunction() {
+            const asymptoteType = document.querySelector('input[name="h-asymptote"]:checked').value;
+            
+            // Build numerator
+            let numerator = isReflected ? -1 : 1;
+            
+            // Apply x-intercepts
+            for (const zero of currentZeros) {
+                numerator *= Math.pow(x - zero.value, zero.multiplicity);
+            }
+            
+            // Build denominator  
+            let denominator = 1;
+            for (const va of currentVAs) {
+                denominator *= Math.pow(x - va.value, va.multiplicity);
+            }
+            
+            // Apply horizontal asymptote
+            if (asymptoteType === 'horizontal' && currentHorizontalAsymptote !== 0) {
+                numerator *= currentHorizontalAsymptote;
+            } else if (asymptoteType === 'slant') {
+                // For slant asymptote, multiply numerator by (slope*x + intercept) 
+                numerator *= (currentSlantAsymptote.slope * x + currentSlantAsymptote.intercept);
+            }
+            
+            return { numerator, denominator };
+        }
+        
+        // Evaluate rational function at x
+        function evaluateRationalFunction(x) {
+            // Check for vertical asymptotes
+            for (const va of currentVAs) {
+                if (Math.abs(x - va.value) < 1e-10) {
+                    return NaN; // Vertical asymptote
+                }
+            }
+            
+            // Check for holes
+            for (const hole of currentHoles) {
+                if (Math.abs(x - hole.x) < 1e-10) {
+                    return NaN; // Hole (removable discontinuity)
+                }
+            }
+            
+            // Build numerator - just based on zeros, no asymptote modification
+            let numerator = isReflected ? -1 : 1;
+            
+            // Apply x-intercepts
+            for (const zero of currentZeros) {
+                numerator *= Math.pow(x - zero.value, zero.multiplicity);
+            }
+            
+            // Build denominator
+            let denominator = 1;
+            for (const va of currentVAs) {
+                denominator *= Math.pow(x - va.value, va.multiplicity);
+            }
+            
+            return numerator / denominator;
+        }
+        
+        // Update arrays based on input changes
+        function updateArrays() {
+            const numVAs = parseInt(numVAsInput.value);
+            const numZeros = parseInt(numZerosInput.value);
+            
+            // Adjust vertical asymptotes
+            while (currentVAs.length < numVAs) {
+                currentVAs.push({ value: Math.random() * 8 - 4, multiplicity: 1 });
+            }
+            while (currentVAs.length > numVAs) {
+                currentVAs.pop();
+            }
+            
+            // Adjust x-intercepts
+            while (currentZeros.length < numZeros) {
+                currentZeros.push({ value: Math.random() * 8 - 4, multiplicity: 1 });
+            }
+            while (currentZeros.length > numZeros) {
+                currentZeros.pop();
+            }
+            
+            clearFeedback();
+            drawGraph();
+        }
+        
+        // Add hole
+        function addHole() {
+            const x = parseNumericInput(holeXInput.value);
+const y = parseNumericInput(holeYInput.value);
+
+            
+            if (isNaN(x) || isNaN(y)) {
+                feedback.textContent = 'Please enter valid coordinates for the hole.';
+                feedback.className = 'feedback incorrect';
+                return;
+            }
+            
+            currentHoles.push({ x, y });
+            holeXInput.value = '';
+            holeYInput.value = '';
+            clearFeedback();
+            drawGraph();
+            updateHolesList();
+        }
+        
+        // Delete hole by index
+        function deleteHole(index) {
+            if (index >= 0 && index < currentHoles.length) {
+                currentHoles.splice(index, 1);
+                clearFeedback();
+                drawGraph();
+                updateHolesList();
+            }
+        }
+        
+        // Update the holes list display
+        function updateHolesList() {
+            const holesListEl = document.getElementById('holes-list');
+            
+            // Clear existing content
+            holesListEl.innerHTML = '';
+            
+            if (currentHoles.length === 0) {
+                const noHolesMessage = document.createElement('div');
+                noHolesMessage.className = 'no-holes-message';
+                noHolesMessage.textContent = 'No holes added yet';
+                holesListEl.appendChild(noHolesMessage);
+                return;
+            }
+            
+            // Add each hole to the list
+            currentHoles.forEach((hole, index) => {
+                const holeItem = document.createElement('div');
+                holeItem.className = 'hole-item';
+                
+                const holeInfo = document.createElement('div');
+                holeInfo.className = 'hole-info';
+                
+                const holeCoords = document.createElement('span');
+                holeCoords.className = 'hole-coords';
+                holeCoords.textContent = `Hole ${index + 1}: (${hole.x.toFixed(2)}, ${hole.y.toFixed(2)})`;
+                
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'delete-hole-button';
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteHole(index);
+                
+                holeInfo.appendChild(holeCoords);
+                holeItem.appendChild(holeInfo);
+                holeItem.appendChild(deleteButton);
+                
+                holesListEl.appendChild(holeItem);
+            });
+        }
+        
+        // Check answer
+        function checkAnswer() {
+            const asymptoteType = document.querySelector('input[name="h-asymptote"]:checked').value;
+            
+            // Check asymptote type and value
+            let asymptoteMatch = false;
+            if (targetFunction.horizontalAsymptote !== null && asymptoteType === 'horizontal') {
+                asymptoteMatch = Math.abs(currentHorizontalAsymptote - targetFunction.horizontalAsymptote) < 0.01;
+            } else if (targetFunction.horizontalAsymptote === null && targetFunction.slantAsymptote !== null && asymptoteType === 'slant') {
+                // Check if slant asymptote slope and intercept match (within tolerance)
+                const slopeMatch = Math.abs(currentSlantAsymptote.slope - targetFunction.slantAsymptote.slope) < 0.01;
+                const interceptMatch = Math.abs(currentSlantAsymptote.intercept - targetFunction.slantAsymptote.intercept) < 0.01;
+                asymptoteMatch = slopeMatch && interceptMatch;
+            } else if (targetFunction.horizontalAsymptote === null && targetFunction.slantAsymptote === null && asymptoteType === 'none') {
+                asymptoteMatch = true;
+            }
+            
+            // Check zeros (actual positions and multiplicities)
+            const zerosMatch = targetFunction.numeratorZeros.length === currentZeros.length &&
+                targetFunction.numeratorZeros.every(targetZero => 
+                    currentZeros.some(currentZero => 
+                        Math.abs(currentZero.value - targetZero.value) < 0.1 && 
+                        currentZero.multiplicity === targetZero.multiplicity
+                    )
+                );
+            
+            // Check vertical asymptotes (actual positions and multiplicities)
+            const vasMatch = targetFunction.denominatorZeros.length === currentVAs.length &&
+                targetFunction.denominatorZeros.every(targetVA => 
+                    currentVAs.some(currentVA => 
+                        Math.abs(currentVA.value - targetVA.value) < 0.1 && 
+                        currentVA.multiplicity === targetVA.multiplicity
+                    )
+                );
+            
+            // Check holes (both position and y-coordinate)
+            let holesMatch = true;
+            
+            // If target has holes but user doesn't, it's wrong
+            if (targetFunction.holes.length > 0 && currentHoles.length === 0) {
+                holesMatch = false;
+            }
+            // If user has holes but target doesn't, it's wrong  
+            else if (targetFunction.holes.length === 0 && currentHoles.length > 0) {
+                holesMatch = false;
+            }
+            // If both have holes, check they match
+            else if (targetFunction.holes.length > 0 && currentHoles.length > 0) {
+                holesMatch = targetFunction.holes.length === currentHoles.length &&
+                    targetFunction.holes.every(targetHole => 
+                        currentHoles.some(currentHole => 
+                            Math.abs(currentHole.x - targetHole.x) < 0.1 && 
+                            Math.abs(currentHole.y - targetHole.y) < 0.1
+                        )
+                    );
+            }
+            // If both have no holes, it's correct (holesMatch stays true)
+            
+            // Check reflection (if target has negative leading coefficient)
+            const targetCoeff = targetFunction.numeratorCoeff / targetFunction.denominatorCoeff;
+            const reflectionMatch = (targetCoeff < 0) === isReflected;
+            
+            if (asymptoteMatch && zerosMatch && vasMatch && holesMatch && reflectionMatch) {
+                feedback.textContent = '🎉 Correct! Your rational function matches the target!';
+                feedback.className = 'feedback correct';
+            } else {
+                let message = '❌ Not quite right. ';
+                if (!asymptoteMatch) message += 'Check your asymptote type and value. ';
+                if (!zerosMatch) message += 'Check your x-intercept positions. ';
+                if (!vasMatch) message += 'Check your vertical asymptote positions. ';
+                if (!holesMatch) message += 'Check your hole positions and y-coordinates. ';
+                if (!reflectionMatch) message += 'Check if you need to reflect. ';
+                
+                feedback.textContent = message;
+                feedback.className = 'feedback incorrect';
+            }
+        }
+        
+        function clearFeedback() {
+            feedback.className = 'feedback hidden';
+        }
+        
+        // Draw the graph
+        function drawGraph() {
+            let xmin = graphData.xmin,
+                xmax = graphData.xmax,
+                xscale = graphData.xscale,
+                xi = graphData.xlabelInterval;
+                
+            let ymin = graphData.ymin,
+                ymax = graphData.ymax,
+                yscale = graphData.yscale,
+                yi = graphData.ylabelInterval;
+                
+            const axMin = xmin - xscale, axMax = xmax + xscale;
+            const ayMin = ymin - yscale, ayMax = ymax + yscale;
+            
+            const tickFontSize = graphData.tickFontSize;
+            const axisLabelFontSize = graphData.axisLabelFontSize;
+            
+            const W = canvas.width,
+                  H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
+            const toPxX = x => (x - axMin) * (W / (axMax - axMin));
+            const toPxY = y => H - (y - ayMin) * (H / (ayMax - ayMin));
+
+            // Grid lines
+            ctx.setLineDash([]);
+            ctx.strokeStyle = 'rgba(128,128,128,0.5)';
+            ctx.lineWidth = 0.5;
+            for (let x = xmin; x <= xmax; x += xscale) {
+                const px = toPxX(x);
+                ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+            }
+            for (let y = ymin; y <= ymax; y += yscale) {
+                const py = toPxY(y);
+                ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
+            }
+            
+            // Axes
+            ctx.setLineDash([]);
+            ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+            const x0 = toPxX(0), y0 = toPxY(0);
+            ctx.beginPath(); ctx.moveTo(toPxX(axMin), y0); ctx.lineTo(toPxX(axMax), y0); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x0, toPxY(ayMin)); ctx.lineTo(x0, toPxY(ayMax)); ctx.stroke();
+            
+            // Arrowheads
+            ctx.fillStyle = '#000'; const head = 12;
+            ctx.beginPath(); ctx.moveTo(toPxX(axMax), y0);
+            ctx.lineTo(toPxX(axMax) - head, y0 - head/2);
+            ctx.lineTo(toPxX(axMax) - head, y0 + head/2);
+            ctx.closePath(); ctx.fill();
+            
+            ctx.beginPath(); ctx.moveTo(toPxX(axMin), y0);
+            ctx.lineTo(toPxX(axMin) + head, y0 - head/2);
+            ctx.lineTo(toPxX(axMin) + head, y0 + head/2);
+            ctx.closePath(); ctx.fill();
+            
+            ctx.beginPath(); ctx.moveTo(x0, toPxY(ayMax));
+            ctx.lineTo(x0 - head/2, toPxY(ayMax) + head);
+            ctx.lineTo(x0 + head/2, toPxY(ayMax) + head);
+            ctx.closePath(); ctx.fill();
+            
+            ctx.beginPath(); ctx.moveTo(x0, toPxY(ayMin));
+            ctx.lineTo(x0 - head/2, toPxY(ayMin) - head);
+            ctx.lineTo(x0 + head/2, toPxY(ayMin) - head);
+            ctx.closePath(); ctx.fill();
+            
+            // Ticks & labels
+            ctx.setLineDash([]);
+            ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.fillStyle = '#000';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.font = tickFontSize + 'px Computer Modern Serif';
+            
+            // X-ticks
+            for (let x = xmin; x <= xmax; x += xscale) {
+                const px = toPxX(x);
+                ctx.beginPath();
+                ctx.moveTo(px, y0 - 5);
+                ctx.lineTo(px, y0 + 5);
+                ctx.stroke();
+                
+                const ratio = x / xi;
+                if (x !== 0 && Math.abs(ratio - Math.round(ratio)) < 1e-6) {
+                    ctx.fillText(formatLabel(x), px, y0 + tickFontSize + 4);
+                }
+            }
+            
+            // Y-ticks
+            for (let y = ymin; y <= ymax; y += yscale) {
+                const py = toPxY(y);
+                ctx.beginPath(); ctx.moveTo(x0 - 5, py); ctx.lineTo(x0 + 5, py); ctx.stroke();
+                const ratio = y / yi;
+                if (y !== 0 && Math.abs(ratio - Math.round(ratio)) < 1e-6) {
+                    ctx.fillText(formatLabel(y), x0 - tickFontSize - 4, py);
+                }
+            }
+            
+            // Origin
+            ctx.fillText('0', x0 - tickFontSize/2, y0 + tickFontSize/2+3);
+            
+            // Axis labels
+            ctx.fillStyle = '#000';
+            ctx.font = 'italic ' + axisLabelFontSize + 'px Computer Modern Serif';
+            ctx.fillText('x',
+                toPxX(axMax) - axisLabelFontSize/1.5,
+                y0 - axisLabelFontSize - 1
+            );
+            ctx.fillText('y',
+                x0 + axisLabelFontSize,
+                toPxY(ayMax) + axisLabelFontSize/1.5
+            );
+            
+            // Draw asymptotes
+            const asymptoteType = document.querySelector('input[name="h-asymptote"]:checked').value;
+            
+            // Vertical asymptotes (extend full height)
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 2;
+            for (const va of currentVAs) {
+                const px = toPxX(va.value);
+                ctx.beginPath();
+                ctx.moveTo(px, 0);
+                ctx.lineTo(px, H);
+                ctx.stroke();
+            }
+            
+            // Horizontal asymptote
+            if (asymptoteType === 'horizontal') {
+                const py = toPxY(currentHorizontalAsymptote);
+                ctx.beginPath();
+                ctx.moveTo(0, py);
+                ctx.lineTo(W, py);
+                ctx.stroke();
+            }
+            
+            // Slant asymptote with draggable points
+            if (asymptoteType === 'slant') {
+                // Update slope and intercept from current points
+                const dx = currentSlantPoints[1].x - currentSlantPoints[0].x;
+                const dy = currentSlantPoints[1].y - currentSlantPoints[0].y;
+                if (Math.abs(dx) > 0.001) {
+                    currentSlantAsymptote.slope = dy / dx;
+                    currentSlantAsymptote.intercept = currentSlantPoints[0].y - currentSlantAsymptote.slope * currentSlantPoints[0].x;
+                }
+                
+                // Draw the full slant line
+                ctx.beginPath();
+                const xStart = axMin;
+                const yStart = currentSlantAsymptote.slope * xStart + currentSlantAsymptote.intercept;
+                const xEnd = axMax;
+                const yEnd = currentSlantAsymptote.slope * xEnd + currentSlantAsymptote.intercept;
+                ctx.moveTo(toPxX(xStart), toPxY(yStart));
+                ctx.lineTo(toPxX(xEnd), toPxY(yEnd));
+                ctx.stroke();
+                
+                // Draw draggable points on the slant line
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#3498db';
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                
+                // Point 1
+                const px1 = toPxX(currentSlantPoints[0].x);
+                const py1 = toPxY(currentSlantPoints[0].y);
+                ctx.beginPath();
+                ctx.arc(px1, py1, 8, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Point 2
+                const px2 = toPxX(currentSlantPoints[1].x);
+                const py2 = toPxY(currentSlantPoints[1].y);
+                ctx.beginPath();
+                ctx.arc(px2, py2, 8, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+            }
+            
+            // Draw rational function curve (allow a little overshoot, but break on big jumps)
+            ctx.setLineDash([]);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+
+            const step = (axMax - axMin) / 2000;
+            let currentPath = [];
+            // margin (10% of height) to let curve extend slightly beyond view
+            const yMargin = (ayMax - ayMin) * 0.1;
+            // max continuous jump (in graph‐units) before we force a break
+            const maxJump = (ayMax - ayMin) * 0.8;
+
+            for (let x = axMin; x <= axMax; x += step) {
+                const y = evaluateRationalFunction(x);
+                const prev = currentPath.length ? currentPath[currentPath.length - 1] : null;
+
+                const inRange   = !isNaN(y) && isFinite(y)
+                                 && y >= (ayMin - yMargin)
+                                 && y <= (ayMax + yMargin);
+                const continuous = prev === null
+                                 || Math.abs(y - prev.y) < maxJump;
+
+                if (inRange && continuous) {
+                    currentPath.push({ x, y });
+                } else {
+                    // draw what we have so far
+                    if (currentPath.length > 1) {
+                        ctx.beginPath();
+                        ctx.moveTo(toPxX(currentPath[0].x), toPxY(currentPath[0].y));
+                        for (let pt of currentPath) {
+                            ctx.lineTo(toPxX(pt.x), toPxY(pt.y));
+                        }
+                        ctx.stroke();
+                    }
+                    currentPath = [];
+                }
+            }
+            // draw any remaining segment
+            if (currentPath.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(toPxX(currentPath[0].x), toPxY(currentPath[0].y));
+                for (let pt of currentPath) {
+                    ctx.lineTo(toPxX(pt.x), toPxY(pt.y));
+                }
+                ctx.stroke();
+            }
+            
+            // Draw x-intercepts (zeros)
+            ctx.fillStyle = '#e74c3c';
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            for (const zero of currentZeros) {
+                const px = toPxX(zero.value);
+                const py = toPxY(0);
+                const radius = 6 + (zero.multiplicity - 1) * 3;
+                
+                ctx.beginPath();
+                ctx.arc(px, py, radius, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+                
+                if (zero.multiplicity > 1) {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(zero.multiplicity.toString(), px, py);
+                    ctx.fillStyle = '#e74c3c';
+                }
+            }
+            
+            // Draw vertical asymptotes with multiplicity
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 2;
+            for (const va of currentVAs) {
+                const px = toPxX(va.value);
+                
+                // Draw the asymptote line
+                ctx.beginPath();
+                ctx.moveTo(px, 0);
+                ctx.lineTo(px, H);
+                ctx.stroke();
+                
+                // If multiplicity > 1, add marker
+                if (va.multiplicity > 1) {
+                    ctx.setLineDash([]);
+                    // Draw a circle at the top of the asymptote
+                    const markerY = 30; // Position near the top of the graph
+                    ctx.fillStyle = '#3498db';
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    const radius = 6 + (va.multiplicity - 1) * 2;
+                    
+                    ctx.beginPath();
+                    ctx.arc(px, markerY, radius, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    // Add multiplicity number
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(va.multiplicity.toString(), px, markerY);
+                    ctx.fillStyle = '#3498db';
+                    ctx.setLineDash([5, 5]); // Restore dashed line style
+                }
+            }
+            
+            // Draw holes
+            ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([]);
+            for (const hole of currentHoles) {
+                const px = toPxX(hole.x);
+                const py = toPxY(hole.y);
+                
+                ctx.beginPath();
+                ctx.arc(px, py, 6, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+        
+        // Check for merged zeros (points in the same location)
+        function checkForMergedZeros() {
+            const threshold = 0.3; // Distance threshold for merging
+            let changed = false;
+            
+            // Check and merge x-intercepts
+            for (let i = 0; i < currentZeros.length; i++) {
+                for (let j = i + 1; j < currentZeros.length; j++) {
+                    if (Math.abs(currentZeros[i].value - currentZeros[j].value) < threshold) {
+                        // Merge zeros by combining multiplicities
+                        currentZeros[i].multiplicity += currentZeros[j].multiplicity;
+                        currentZeros.splice(j, 1);
+                        changed = true;
+                        j--; // Adjust index after removal
+                    }
+                }
+            }
+            
+            // Check and merge vertical asymptotes
+            for (let i = 0; i < currentVAs.length; i++) {
+                for (let j = i + 1; j < currentVAs.length; j++) {
+                    if (Math.abs(currentVAs[i].value - currentVAs[j].value) < threshold) {
+                        // Merge VAs by combining multiplicities
+                        currentVAs[i].multiplicity += currentVAs[j].multiplicity;
+                        currentVAs.splice(j, 1);
+                        changed = true;
+                        j--; // Adjust index after removal
+                    }
+                }
+            }
+            
+            // Update count inputs if needed (but don't add elements)
+            if (changed) {
+                numZerosInput.value = currentZeros.length.toString();
+                numVAsInput.value = currentVAs.length.toString();
+                drawGraph();
+            }
+            
+            return changed;
+        }
+        
+        // Settings dialog
+        function showGraphSettingsDialog() {
+            const dialogBackdrop = document.createElement("div");
+            dialogBackdrop.className = "dialog-backdrop";
+            
+            const dialogBox = document.createElement("div");
+            dialogBox.className = "dialog-box";
+            
+            const dialogTitle = document.createElement("h3");
+            dialogTitle.textContent = "Graph Settings";
+            dialogTitle.style.marginTop = "0";
+            dialogBox.appendChild(dialogTitle);
+            
+            const settings = [
+                { label: "X min:", key: "xmin" },
+                { label: "X max:", key: "xmax" },
+                { label: "Y min:", key: "ymin" },
+                { label: "Y max:", key: "ymax" },
+                { label: "X scale:", key: "xscale" },
+                { label: "Y scale:", key: "yscale" },
+                { label: "X label interval:", key: "xlabelInterval" },
+                { label: "Y label interval:", key: "ylabelInterval" }
+            ];
+            
+            const inputs = {};
+            settings.forEach(setting => {
+                const row = document.createElement("div");
+                row.className = "dialog-row";
+                
+                const label = document.createElement("label");
+                label.textContent = setting.label;
+                label.className = "dialog-label";
+                
+                const input = document.createElement("input");
+                input.type = "number";
+                input.step = "any";
+                input.value = graphData[setting.key];
+                input.className = "dialog-input";
+                inputs[setting.key] = input;
+                
+                row.appendChild(label);
+                row.appendChild(input);
+                dialogBox.appendChild(row);
+            });
+            
+            const buttonContainer = document.createElement("div");
+            buttonContainer.className = "dialog-buttons";
+            
+            const applyButton = document.createElement("button");
+            applyButton.textContent = "Apply";
+            applyButton.className = "dialog-button primary";
+            applyButton.onclick = () => {
+                settings.forEach(setting => {
+                    const value = parseNumericInput(inputs[setting.key].value);
+
+                    if (!isNaN(value)) {
+                        graphData[setting.key] = value;
+                    }
+                });
+                drawGraph();
+                document.body.removeChild(dialogBackdrop);
+            };
+            
+            const cancelButton = document.createElement("button");
+            cancelButton.textContent = "Cancel";
+            cancelButton.className = "dialog-button secondary";
+            cancelButton.onclick = () => {
+                document.body.removeChild(dialogBackdrop);
+            };
+            
+            buttonContainer.appendChild(cancelButton);
+            buttonContainer.appendChild(applyButton);
+            dialogBox.appendChild(buttonContainer);
+            
+            dialogBackdrop.appendChild(dialogBox);
+            document.body.appendChild(dialogBackdrop);
+        }
+        
+        // Mouse interaction
+        let isDragging = false;
+        let dragType = null; // 'zero', 'va', 'ha', 'slant', 'hole'
+        let dragIndex = -1;
+        let dragPoint = null; // 'start' or 'end' for slant asymptote
+        
+        function getInteractiveElementAt(mouseX, mouseY) {
+            const threshold = 25;
+            
+            // Check zeros
+            const py = toCanvasY(0);
+            for (let i = 0; i < currentZeros.length; i++) {
+                const px = toCanvasX(currentZeros[i].value);
+                const distance = Math.sqrt((mouseX - px) ** 2 + (mouseY - py) ** 2);
+                if (distance <= threshold) {
+                    return { type: 'zero', index: i };
+                }
+            }
+            
+            // Check vertical asymptotes
+            for (let i = 0; i < currentVAs.length; i++) {
+                const px = toCanvasX(currentVAs[i].value);
+                const distance = Math.abs(mouseX - px);
+                if (distance <= threshold) {
+                    return { type: 'va', index: i };
+                }
+            }
+            
+            // Check horizontal asymptote
+            const asymptoteType = document.querySelector('input[name="h-asymptote"]:checked').value;
+            if (asymptoteType === 'horizontal') {
+                const py = toCanvasY(currentHorizontalAsymptote);
+                const distance = Math.abs(mouseY - py);
+                if (distance <= threshold) {
+                    return { type: 'ha', index: 0 };
+                }
+            }
+            
+            // Check slant asymptote points
+            if (asymptoteType === 'slant') {
+                // Point 1
+                const px1 = toCanvasX(currentSlantPoints[0].x);
+                const py1 = toCanvasY(currentSlantPoints[0].y);
+                const dist1 = Math.sqrt((mouseX - px1) ** 2 + (mouseY - py1) ** 2);
+                
+                // Point 2
+                const px2 = toCanvasX(currentSlantPoints[1].x);
+                const py2 = toCanvasY(currentSlantPoints[1].y);
+                const dist2 = Math.sqrt((mouseX - px2) ** 2 + (mouseY - py2) ** 2);
+                
+                if (dist1 <= threshold) {
+                    return { type: 'slant', index: 0, point: 'point1' };
+                }
+                if (dist2 <= threshold) {
+                    return { type: 'slant', index: 0, point: 'point2' };
+                }
+            }
+            
+            // Check holes
+            for (let i = 0; i < currentHoles.length; i++) {
+                const px = toCanvasX(currentHoles[i].x);
+                const py = toCanvasY(currentHoles[i].y);
+                const distance = Math.sqrt((mouseX - px) ** 2 + (mouseY - py) ** 2);
+                if (distance <= threshold) {
+                    return { type: 'hole', index: i };
+                }
+            }
+            
+            return null;
+        }
+        
+        // Handle splitting for points with multiplicity > 1
+        function splitPointIfNeeded(type, index) {
+            if (type === 'zero' && currentZeros[index] && currentZeros[index].multiplicity > 1) {
+                // Split zero - reduce multiplicity by 1 and create a new point slightly offset
+                currentZeros[index].multiplicity--;
+                currentZeros.push({ 
+                    value: currentZeros[index].value + 0.3, 
+                    multiplicity: 1 
+                });
+                return true;
+            } else if (type === 'va' && currentVAs[index] && currentVAs[index].multiplicity > 1) {
+                // Split vertical asymptote
+                currentVAs[index].multiplicity--;
+                currentVAs.push({ 
+                    value: currentVAs[index].value + 0.3, 
+                    multiplicity: 1 
+                });
+                return true;
+            }
+            return false;
+        }
+        
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const element = getInteractiveElementAt(mouseX, mouseY);
+            if (element) {
+                isDragging = true;
+                dragType = element.type;
+                dragIndex = element.index;
+                dragPoint = element.point;
+                canvas.style.cursor = 'grabbing';
+                
+                // If double-clicked on a point with multiplicity > 1, split it
+                if (e.detail === 2) { // Double click
+                    if (splitPointIfNeeded(dragType, dragIndex)) {
+                        // Update the appropriate input counter
+                        if (dragType === 'zero') {
+                            numZerosInput.value = currentZeros.length.toString();
+                        } else if (dragType === 'va') {
+                            numVAsInput.value = currentVAs.length.toString();
+                        }
+                        drawGraph();
+                    }
+                }
+            }
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            if (isDragging) {
+    const graphX = toGraphX(mouseX);
+    const graphY = toGraphY(mouseY);
+    
+    if (dragType === 'zero') {
+        currentZeros[dragIndex].value = snapToGrid(graphX, graphData.xscale);
+    } else if (dragType === 'va') {
+        currentVAs[dragIndex].value = snapToGrid(graphX, graphData.xscale);
+    } else if (dragType === 'ha') {
+        // Snap horizontal asymptote to y-scale instead of integers
+        currentHorizontalAsymptote = snapToGrid(graphY, graphData.yscale);
+    } else if (dragType === 'slant') {
+        // Snap both x and y to their respective scales
+        const snappedX = snapToGrid(graphX, graphData.xscale);
+        const snappedY = snapToGrid(graphY, graphData.yscale);
+        
+        if (dragPoint === 'point1') {
+            currentSlantPoints[0].x = snappedX;
+            currentSlantPoints[0].y = snappedY;
+        } else if (dragPoint === 'point2') {
+            currentSlantPoints[1].x = snappedX;
+            currentSlantPoints[1].y = snappedY;
+        }
+        
+        // Update slope and intercept from the new points
+        const dx = currentSlantPoints[1].x - currentSlantPoints[0].x;
+        const dy = currentSlantPoints[1].y - currentSlantPoints[0].y;
+        if (Math.abs(dx) > 0.001) {
+            currentSlantAsymptote.slope = dy / dx;
+            currentSlantAsymptote.intercept = currentSlantPoints[0].y - currentSlantAsymptote.slope * currentSlantPoints[0].x;
+        }
+    } else if (dragType === 'hole') {
+        currentHoles[dragIndex].x = snapToGrid(graphX, graphData.xscale);
+        currentHoles[dragIndex].y = snapToGrid(graphY, graphData.yscale); // Also snap y values for holes
+    }
+    
+    clearFeedback();
+    drawGraph();
+
+            } else {
+                const element = getInteractiveElementAt(mouseX, mouseY);
+                canvas.style.cursor = element ? 'grab' : 'crosshair';
+            }
+        });
+        
+        // When a hole is dragged, update the display
+        function updateHoleAfterDrag(index) {
+            if (index >= 0 && index < currentHoles.length) {
+                updateHolesList();
+            }
+        }
+        
+        canvas.addEventListener('mouseup', () => {
+            if (isDragging) {
+                // Check if points were merged
+                checkForMergedZeros();
+                
+                // If a hole was being dragged, update the hole list
+                if (dragType === 'hole') {
+                    updateHoleAfterDrag(dragIndex);
+                }
+            }
+            
+            isDragging = false;
+            dragType = null;
+            dragIndex = -1;
+            dragPoint = null;
+            canvas.style.cursor = 'crosshair';
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            dragType = null;
+            dragIndex = -1;
+            dragPoint = null;
+            canvas.style.cursor = 'crosshair';
+        });
+        
+        // Event listeners
+        updateButton.addEventListener('click', updateFromEquation);
+        checkButton.addEventListener('click', checkAnswer);
+        settingsButton.addEventListener('click', showGraphSettingsDialog);
+        addHoleButton.addEventListener('click', addHole);
+        
+        haHorizontalRadio.addEventListener('change', () => {
+            clearFeedback();
+            drawGraph();
+        });
+        
+        haSlantRadio.addEventListener('change', () => {
+            clearFeedback();
+            drawGraph();
+        });
+        
+        haNoneRadio.addEventListener('change', () => {
+            clearFeedback();
+            drawGraph();
+        });
+        
+        numVAsInput.addEventListener('change', updateArrays);
+        numZerosInput.addEventListener('change', updateArrays);
+        
+        reflectButton.addEventListener('click', () => {
+            isReflected = !isReflected;
+            clearFeedback();
+            drawGraph();
+        });
+        
+        userEquationInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                updateFromEquation();
+            }
+        });
+        
+        // Initialize by parsing the default equation
+        updateFromEquation();
+        
+        // Initialize the holes list display
+        updateHolesList();
+    </script>
+</body>
+</html>
